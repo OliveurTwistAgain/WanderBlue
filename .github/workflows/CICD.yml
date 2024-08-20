@@ -1,0 +1,130 @@
+name: CI/CD Pipeline MySQL via Docker, Ghost en Local et Mailgun
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup_mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.DATABASE_NAME }}
+          MYSQL_USER: ${{ secrets.DATABASE_USER }}
+          MYSQL_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Checking MySQL readiness..."
+          for i in {1..10}; do
+            if docker exec $(docker ps -q -f "ancestor=mysql:8") mysqladmin ping --silent > /dev/null 2>&1; then
+              echo "MySQL is ready!"
+              break
+            else
+              echo "Waiting for MySQL..."
+              echo "MySQL logs:"
+              docker logs $(docker ps -q -f "ancestor=mysql:8")
+              sleep 10
+            fi
+          done
+
+      - name: Test MySQL connection
+        run: |
+          docker exec $(docker ps -q -f "ancestor=mysql:8") mysql -u${{ secrets.DATABASE_USER }} -p${{ secrets.DATABASE_PASSWORD }} -e "SHOW TABLES IN ${{ secrets.DATABASE_NAME }};"
+
+  setup_ghost:
+    runs-on: ubuntu-latest
+    needs: setup_mysql
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Build and run Ghost
+        run: docker-compose up -d
+        env:
+          DATABASE_CLIENT: ${{ secrets.DATABASE_CLIENT }}
+          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+          DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+          GHOST_URL: ${{ secrets.GHOST_URL }}
+          GHOST_PORT: ${{ secrets.GHOST_PORT }}
+          MAIL_TRANSPORT: ${{ secrets.MAIL_TRANSPORT }}
+          MAIL_SERVICE: ${{ secrets.MAIL_SERVICE }}
+          MAIL_USER: ${{ secrets.MAIL_USER }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+          MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+
+      - name: Wait for Ghost to be ready
+        run: |
+          echo "Checking Ghost readiness..."
+          sleep 40  # Attendre un peu plus longtemps avant de commencer à tester
+          for i in {1..60}; do
+            status_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:2368)
+            if [ "$status_code" -eq 200 ]; then
+              echo "Ghost is ready!"
+              break
+            else
+              echo "Waiting for Ghost... Status code: $status_code"
+              echo "Ghost logs:"
+              docker logs $(docker ps -q -f "ancestor=ghost")
+              sleep 10
+            fi
+          done
+
+      - name: Test Ghost server
+        run: curl -f http://localhost:2368 || exit 1
+
+      - name: Test Ghost admin
+        run: curl -f http://localhost:2368/ghost || exit 1
+
+      - name: Test database connection using Ghost
+        run: |
+          curl -f http://localhost:2368/api/v3/db/test || exit 1
+
+  send_test_email:
+    runs-on: ubuntu-latest
+    needs: setup_ghost
+
+    steps:
+      - name: Send test email using Mailgun
+        run: |
+          curl -s --user "api:${{ secrets.MAILGUN_API_KEY }}" \
+            https://api.mailgun.net/v3/${{ secrets.MAILGUN_DOMAIN }}/messages \
+            -F from='Bob at WanderBlue <${{ secrets.MAIL_FROM }}>' \
+            -F to=${{ secrets.TEST_EMAIL }} \
+            -F subject='Hello Sir' \
+            -F text='Testing Mailgun integration!' || exit 1

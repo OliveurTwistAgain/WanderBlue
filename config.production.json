@@ -1,0 +1,28 @@
+{
+    "database": {
+        "client": "mysql",
+        "connection": {
+            "host": "${MYSQLHOST}",
+            "user": "${DATABASE_USER}",
+            "password": "${DATABASE_PASSWORD}",
+            "database": "${DATABASE_NAME}",
+            "port": "${DATABASE_PORT}"
+        }
+    },
+    "server": {
+        "port": "2368",
+        "host": "0.0.0.0"
+    },
+    "mail": {
+        "transport": "${MAIL_TRANSPORT}",
+        "options": {
+            "service": "${MAIL_SERVICE}",
+            "auth": {
+                "user": "${MAIL_USER}",
+                "pass": "${MAIL_PASSWORD}"
+            }
+        },
+        "from": "${MAIL_FROM}"
+    },
+    "url": "https://wanderblue-production.up.railway.app"
+}
