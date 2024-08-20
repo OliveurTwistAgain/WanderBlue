@@ -1,0 +1,23 @@
+services:
+  ghost:
+    image: ghost:latest
+    ports:
+      - "2368:2368"
+    volumes:
+      - ./content:/var/lib/ghost/content
+    environment:
+      # URL du site
+      url: ${GHOST_URL}
+      # Configuration de la base de données
+      database__client: mysql
+      database__connection__host: ${DATABASE_HOST}
+      database__connection__user: ${DATABASE_USER}
+      database__connection__password: ${DATABASE_PASSWORD}
+      database__connection__database: ${DATABASE_NAME}
+      database__connection__port: ${DATABASE_PORT}
+      # Configuration Mailgun pour l'envoi des emails
+      mail__transport: ${MAIL_TRANSPORT}
+      mail__options__service: ${MAIL_SERVICE}
+      mail__options__auth__user: ${MAIL_USER}
+      mail__options__auth__pass: ${MAIL_PASSWORD}
+      mail__from: ${MAIL_FROM}

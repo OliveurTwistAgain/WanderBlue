@@ -9,5 +9,3 @@ content/logs/
 content/themes/casper
 content/themes/source
 
-# Ignore docker-compose
-docker-compose.yml
