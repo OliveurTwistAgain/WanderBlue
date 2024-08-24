@@ -1,19 +1,21 @@
-# WanderBlue 🌊 (ce readme est en cours de rédaction -- dernière maj : lundi 19/08/24)
+# WanderBlue 🌊
 
-Bienvenue sur **WanderBlue** ! Un projet Ghost CMS personnalisé, propulsé par Docker et déployé en localhost puis via Railway 🚀.
+Bienvenue sur **WanderBlue** ! Flâner et trouver... votre coin de ciel bleu !
+
+Un projet Ghost CMS personnalisé, propulsé par Docker et déployé en localhost puis via Railway 🚀. L'idée est de proposer aux internautes des idées de visites à travers le monde via un formulaire de recherche (ville à saisir). Chaque post est un lieu avec coordonnées GPS latitude et longitude.
 
 ## 📝 Description
 
-WanderBlue est un blog moderne construit avec [Ghost](https://ghost.org/). Ce projet utilise Docker pour une portabilité maximale et est déployé via Railway pour une gestion simplifiée en lien avec ce repository. Il est également configuré pour utiliser une base de données MySQL 8 hébergée sur Filess.io (accessible publiquement).
+WanderBlue est construit avec [Ghost](https://ghost.org/). Ce projet utilise Docker pour une portabilité maximale et est déployé en premier lieu en localhost avec une base de données MySQL 8 hébergée sur Filess.io puis propulsé par Railway (https://wanderblue-template.up.railway.app).
 
 ## ⚙️ Fonctionnalités et structure
 
-- ✨ **Ghost CMS** : Le cœur de la plateforme, offrant des fonctionnalités de blog puissantes.
+- ✨ **Ghost CMS** : Le cœur de la plateforme, offrant des fonctionnalités puissantes, création d'API comprises.
 - 🐳 **Docker** : Facilité de déploiement et de gestion grâce à la conteneurisation.
 - 🛠️ **CI/CD avec GitHub Actions** : Déploiement en local et tests intermédiaires via GitHub Actions avant déploiement sur Railway.
 - 🗄️ **MySQL 8** : Base de données, MySQL 8 requis avec l'image Ghost:latest.
 - ✉️ **Intégration Mailgun** : Gère les emails transactionnels avec efficacité.
-- 📝 **Structure** : arborescence typique de début de projet Ghost via Docker
+- 📝 **Structure** : Arborescence typique de début de projet Ghost via Docker
 
 ```
 WanderBlue/
@@ -30,12 +32,11 @@ WanderBlue/
 
 ### Prérequis
 
-- Docker Desktop installé 🐳
 - Compte sur [Filess.io](https://filess.io) pour accès à une instance MySQL 8 💾
 - Compte sur [Mailgun](https://www.mailgun.com/) pour les emails 📬
-- Compte sur ? (quelque part, je cherche) pour le déploiement 🥁
+- Compte sur [Railway](https://railway.app/) pour le déploiement 🥁
 
-Petit conseil : si vous êtes sur Visual Studio Code, ajouter les extensions suivantes : Git, GitHub Actions, Database et Docker. Très pratique !
+Petit conseil : si vous êtes sur Visual Studio Code, ajouter les extensions suivantes : Git, GitHub Actions, Database !
 
 ### Instructions
 
@@ -69,7 +70,7 @@ Petit conseil : si vous êtes sur Visual Studio Code, ajouter les extensions sui
    TEST_EMAIL=ton_adresse_email_habituelle@xxx.com
    ```
 
-   Seule `GHOST_URL`prendra une valeur différente dans les variables lors du déploiement à savoir `GHOST_URL=https://wanderblue.xxxx.app` (selon l'hébergeur choisi) ! Pour la clé API de Mailgun, la créer dans settings > API Keys sur Dashboard Mailgun. TEST_EMAIL te permet de recevoir les emails tests du Workflow GitHub Actions.
+   Seule `GHOST_URL`prendra une valeur différente dans les variables lors du déploiement à savoir `GHOST_URL=https://xxxx.railway.app`. Pour la clé API de Mailgun, la créer dans settings > API Keys sur Dashboard Mailgun. TEST_EMAIL permet de recevoir les emails tests du Workflow GitHub Actions.
 
 3. **Lancer avec Docker :**
 
@@ -82,24 +83,28 @@ Petit conseil : si vous êtes sur Visual Studio Code, ajouter les extensions sui
    Le Frontend sera accessible sur `http://localhost:2368`.
    Le Backend (ou Dashboard) sera accessible sur `http://localhost:2368/ghost`
 
-   Et en production (selon l'hébergeur choisi) :
+   Et en production :
 
-   Frontend : `https://wanderblue.xxx.app`
-   Backend : `https://wanderblue.xxx.app/ghost`
+   Frontend : `https://xxx.railway.app`
+   Backend : `https://xxx.railway.app/ghost`
 
 5. **Tester le workflow via GitHub Actions :**
 
-   Configurer tous les secrets sur GitHub Actions (voir plus haut) et RDV sur votre projet, rubrique Actions pour observer votre workflow de tests en 3 parties distinctes : Pipeline MySQL via Docker + Ghost en Local + Mailgun.
+   Configurer tous les secrets sur GitHub Actions. Go sur votre projet, rubrique Actions pour observer votre workflow de tests (CICD.yml) en 3 parties distinctes : Pipeline MySQL via Docker + Ghost en Local + Mailgun.
 
 6. **Déploiement :**
 
-   Créer un projet chez un hébergeur (recherche actuelle) en le connectant à ton dépôt GithHub. Vérifier les variables d'environnement, les mêmes que dans le fichier .env sauf $GHOST_URL ! Ce n'est plus `http://localhost:2368` mais l'URL xxx `https://wanderblue.xxx.app` !
+   Créer un projet chez un hébergeur. Vérifier les variables d'environnement, les mêmes que dans le fichier .env sauf $GHOST_URL ! Ce n'est plus `http://localhost:2368` !
 
 ---
 
-📝 **Note** : Ce projet est en cours de développement.
+📝 **Note** :
 Phase 1 : install localhost = 100%
 Phase 2 : Tests CICD = 100%
-Phase 3 : déploiement non ok pour le moment, j'ai testé d'abord Render, puis Railway, je ne suis pas loin mais ça coince (problème d'accès à la base de données sur Render et erreur 404 sur Vercel)... Je vais tester Railway App qui me semble intéressant et je mettrai à jour ce README.md en fonction... 🤞
+Phase 3 : déploiement Railway = 100%
 
-Merci de votre patience et éventuellement de vos retours constructifs | 📬 Email : oliveur.twist.again[at]proton.me
+NB : pour le déploiement, j'avais deux choix possibles. Option 1/ Ghost depuis le repository avec les difficultés d'accès à la base de données MySQL depuis l'extérieur (j'ai essayé Render avec Filess.io, échec, accès refusé à la BDD ; j'imagine que la gratuité a ses limites). Option 2/ Ghost depuis un conteneur Docker et une base de données MySQL 8 hébergé sur Railway. Pour des raisons de timing et de tranquilité, j'ai choisi la deuxième solution avec le Hobby Plan de Railway (5$ par mois).
+
+👨‍💻 **Contact** | 📬 Email : oliveur.twist.again[at]proton.me
+
+{{!-- Dernier dépôt le 24/08/2024 : thème Ghost modifié et adapté aux besoins de la homepage, formulaire de recherche et carte Leaflet. --}}
