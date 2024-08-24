@@ -1,0 +1,208 @@
+{{!< default}} {{!-- The tag above means: insert everything in this file into the {body} of the default.hbs template
+	--}} <div class="site-header-content outer{{#match @custom.header_style " Left aligned"}}
+	left-aligned{{/match}}{{#unless @custom.show_publication_cover}}{{#match @custom.header_style "Hidden" }}
+	no-content{{/match}}{{/unless}}">
+
+	{{#if @custom.show_publication_cover}}
+	{{#if @site.cover_image}}
+	{{!-- This is a responsive image, it loads different sizes depending on device --}}
+	<img class="site-header-cover" srcset="{{img_url @site.cover_image size=" s"}} 300w, {{img_url @site.cover_image
+		size="m" }} 600w, {{img_url @site.cover_image size="l" }} 1000w, {{img_url @site.cover_image size="xl" }} 2000w"
+		sizes="100vw" src="{{img_url @site.cover_image size=" xl"}}" alt="{{@site.title}}" />
+	{{/if}}
+	{{/if}}
+
+	{{#match @custom.header_style "!=" "Hidden"}}
+	<div class="site-header-inner inner">
+		{{#match @custom.navigation_layout "Logo on cover"}}
+		{{#if @site.logo}}
+		<img class="site-logo" src="{{@site.logo}}" alt="{{@site.title}}">
+		{{else}}
+		<h1 class="site-title">{{@site.title}}</h1>
+		{{/if}}
+		{{/match}}
+		{{#if @site.description}}
+		<p class="site-description">{{@site.description}}</p>
+		{{/if}}
+	</div>
+	{{/match}}
+	</div>
+
+	{{!-- The main content area --}}
+	<main id="site-main" class="site-main outer">
+
+		{{!-- Section pour la recherche de lieux --}}
+		<div id="lieux" class="inner posts">
+			<section id="search-section">
+				<h1>Recherche de lieux à visiter</h1>
+				<form id="location-search-form">
+					<input type="text" id="location-input" placeholder="Entrez une ville">
+					<button type="submit">Rechercher</button>
+				</form>
+				<div id="map"></div>
+			</section>
+		</div>
+
+		<div class="inner posts">
+			<h1>Nos derniers coups de coeur</h1>
+
+			<div class="post-feed">
+				{{#get "posts" limit="all" order="published_at desc"}}
+				{{#foreach posts}}
+				{{> "post-card"}}
+				{{/foreach}}
+				{{/get}}
+			</div>
+
+			{{pagination}}
+
+		</div>
+	</main>
+
+	{{!-- Scripts pour la carte et les lieux --}}
+	<script>
+		// Fonction pour calculer la distance entre deux points géographiques en utilisant la formule de Haversine
+		function calculateDistance(lat1, lon1, lat2, lon2) {
+			const R = 6371; // Rayon de la Terre en kilomètres
+			const dLat = (lat2 - lat1) * Math.PI / 180;
+			const dLon = (lon2 - lon1) * Math.PI / 180;
+			const a =
+				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+				Math.sin(dLon / 2) * Math.sin(dLon / 2);
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+			return R * c; // Distance en kilomètres
+		}
+
+		// Création d'un tableau de marqueurs vide pour stocker les coordonnées des 5 lieux
+		let markers = [];
+
+		document.addEventListener('DOMContentLoaded', function () {
+			const form = document.getElementById('location-search-form');
+			const map = L.map('map').setView([48.8566, 2.3522], 5); // Initialisation à Paris
+
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 15,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(map);
+
+			form.addEventListener('submit', function (event) {
+				event.preventDefault();
+				const city = document.getElementById('location-input').value;
+
+				// Utilisation d'une API pour convertir le nom de la ville en coordonnées
+				fetch(`https://nominatim.openstreetmap.org/search?city=${city}&format=json`)
+					.then(response => response.json())
+					.then(data => {
+						if (data.length > 0) {
+							const cityLat = parseFloat(data[0].lat);
+							const cityLon = parseFloat(data[0].lon);
+
+							// Afficher les coordonnées dans la console pour vérification
+							console.log("Ville recherchée:", city);
+							console.log("Latitude obtenue:", cityLat);
+							console.log("Longitude obtenue:", cityLon);
+
+							// Supprimer tous les marqueurs existants de la carte
+							markers.forEach(marker => marker.remove());
+							markers = []; // Réinitialiser le tableau de marqueurs
+
+							// Requête à l'API Ghost Content pour obtenir les posts
+							fetch(`https://wanderblue-template.up.railway.app/ghost/api/content/posts/?key=db4ec6bf270fd23e20eff1fa74&limit=all&fields=title,slug,codeinjection_head,codeinjection_foot,feature_image,excerpt`)
+								.then(response => response.json())
+								.then(data => {
+									const postsWithDistance = data.posts.map(post => {
+										// Extraction des coordonnées depuis les balises <meta> dans codeinjection_head et codeinjection_foot
+										const latMetaMatch = post.codeinjection_head.match(/<meta\s+name="latitude"\s+content="([\d.-]+)">/);
+										const lonMetaMatch = post.codeinjection_foot.match(/<meta\s+name="longitude"\s+content="([\d.-]+)">/);
+
+										if (latMetaMatch && lonMetaMatch) {
+											const postLat = parseFloat(latMetaMatch[1]);
+											const postLon = parseFloat(lonMetaMatch[1]);
+											const distance = calculateDistance(cityLat, cityLon, postLat, postLon);
+											return { post, postLat, postLon, distance };
+										} else {
+											console.log('Impossible de trouver les coordonnées dans les champs codeinjection.');
+											return null;
+										}
+									}).filter(post => post !== null); // Supprimer les posts sans coordonnées
+
+									// Trier les posts par distance et prendre les 5 plus proches
+									postsWithDistance.sort((a, b) => a.distance - b.distance);
+									const closestPosts = postsWithDistance.slice(0, 5);
+
+									// Ajouter un tableau pour les coordonnées des marqueurs
+									let bounds = L.latLngBounds([]);
+
+									// Ajouter des marqueurs pour les 5 lieux les plus proches
+									closestPosts.forEach(({ post, postLat, postLon }) => {
+										const marker = L.marker([postLat, postLon]).addTo(map)
+											.bindPopup(`
+	                                            <div style="text-align: center;">
+	                                                <a href="/${post.slug}">
+	                                                    <h3>${post.title}</h3>
+	                                                    ${post.feature_image ? `<img src="${post.feature_image}" alt="${post.title}" style="width: 60%; height: auto; border-radius: 8px; margin-bottom: 10px;">` : ''}
+	                                                </a>
+	                                                <p>${post.excerpt}</p>
+	                                            </div>
+	                                        `);
+
+										// Ajouter le marqueur dans le tableau des 5 plus proches
+										markers.push(marker);
+
+										// Ajouter les coordonnées à bounds pour ajuster le zoom
+										bounds.extend([postLat, postLon]);
+									});
+
+									// Ajuster automatiquement le zoom et le centre pour inclure tous les marqueurs
+									map.fitBounds(bounds);
+								})
+								.catch(error => console.error('Erreur lors de la récupération des lieux:', error));
+						} else {
+							alert("Saisir une ville");
+						}
+					})
+					.catch(error => console.error('Erreur:', error));
+			});
+		});
+	</script>
+
+	{{!-- Style CSS pour la carte --}}
+
+
+	<style>
+		#map {
+			height: 550px;
+			margin-top: 20px;
+		}
+
+		#search-section {
+			text-align: center;
+			margin: 20px auto;
+			max-width: 100%;
+			/* Pour la largeur du formulaire */
+		}
+
+		#location-search-form {
+			display: flex;
+			justify-content: center;
+			gap: 10px;
+		}
+
+		#location-input {
+			flex-grow: 1;
+			padding: 10px;
+			font-size: 1em;
+			max-width: 50%;
+		}
+
+		#location-search-form button {
+			padding: 10px;
+			font-size: 1em;
+			background-color: #AF3F9F;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+	</style>
