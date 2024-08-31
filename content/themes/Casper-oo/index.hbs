@@ -1,5 +1,7 @@
-{{!< default}} {{!-- The tag above means: insert everything in this file into the {body} of the default.hbs template
-	--}} <div class="site-header-content outer{{#match @custom.header_style " Left aligned"}}
+{{!< default}} 
+{{!-- The tag above : insert everything in this file into the {body} of the default.hbs template --}}
+
+	<div class="site-header-content outer{{#match @custom.header_style " Left aligned"}}
 	left-aligned{{/match}}{{#unless @custom.show_publication_cover}}{{#match @custom.header_style "Hidden" }}
 	no-content{{/match}}{{/unless}}">
 
@@ -30,11 +32,11 @@
 
 	{{!-- The main content area --}}
 	<main id="site-main" class="site-main outer">
-
+	
 		{{!-- Section pour la recherche de lieux --}}
 		<div id="lieux" class="inner posts">
 			<section id="search-section">
-				<h1>Recherche de lieux à visiter</h1>
+				<h1 class="post-card-title">Recherche de lieux à visiter</h1>
 				<form id="location-search-form">
 					<input type="text" id="location-input" placeholder="Entrez une ville">
 					<button type="submit">Rechercher</button>
@@ -42,30 +44,39 @@
 				<div id="map"></div>
 			</section>
 		</div>
-
+	
+		{{!-- Section pour afficher les résultats de la recherche --}}
+		<div class="inner posts search-results-container" style="display: none;">
+			<div class="inner posts">
+				<h1 class="post-card-title"> 5 suggestions pour votre recherche "{{city}}" :</h1>
+				<div class="post-feed">
+					{{#foreach search_results}}
+					{{> "post-card"}}
+					{{/foreach}}
+				</div>
+			</div>
+		</div>
+	
+		{{!-- section pour les 24 derniers lieux  --}}
 		<div class="inner posts">
-			<h1>Nos derniers coups de coeur</h1>
-
+			<h1 class="post-card-title">Nos derniers coups de coeur</h1>
 			<div class="post-feed">
-				{{#get "posts" limit="all" order="published_at desc"}}
+				{{#get "posts" limit="24" order="published_at desc" as |posts|}}
 				{{#foreach posts}}
 				{{> "post-card"}}
 				{{/foreach}}
 				{{/get}}
 			</div>
-
-			{{pagination}}
-
 		</div>
 	</main>
-
+	
 	{{!-- Scripts pour la carte et les lieux --}}
 	<script>
 		// Fonction pour calculer la distance entre deux points géographiques en utilisant la formule de Haversine
 		function calculateDistance(lat1, lon1, lat2, lon2) {
 			const R = 6371; // Rayon de la Terre en kilomètres
 			const dLat = (lat2 - lat1) * Math.PI / 180;
-			const dLon = (lon2 - lon1) * Math.PI / 180;
+			const dLon = (lon1 - lon2) * Math.PI / 180;
 			const a =
 				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
 				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
@@ -76,6 +87,8 @@
 
 		// Création d'un tableau de marqueurs vide pour stocker les coordonnées des 5 lieux
 		let markers = [];
+		// Création d'un tableau de résultats vide pour stocker les résultats de la recherche
+		let searchResults = [];
 
 		document.addEventListener('DOMContentLoaded', function () {
 			const form = document.getElementById('location-search-form');
@@ -106,6 +119,8 @@
 							// Supprimer tous les marqueurs existants de la carte
 							markers.forEach(marker => marker.remove());
 							markers = []; // Réinitialiser le tableau de marqueurs
+							// Réinitialiser le tableau de résultats de recherche
+							searchResults = [];
 
 							// Requête à l'API Ghost Content pour obtenir les posts
 							fetch(`https://wanderblue-template.up.railway.app/ghost/api/content/posts/?key=db4ec6bf270fd23e20eff1fa74&limit=all&fields=title,slug,codeinjection_head,codeinjection_foot,feature_image,excerpt`)
@@ -149,13 +164,16 @@
 
 										// Ajouter le marqueur dans le tableau des 5 plus proches
 										markers.push(marker);
-
 										// Ajouter les coordonnées à bounds pour ajuster le zoom
 										bounds.extend([postLat, postLon]);
+										// Ajouter le post aux résultats de recherche
+										searchResults.push(post);
 									});
 
 									// Ajuster automatiquement le zoom et le centre pour inclure tous les marqueurs
 									map.fitBounds(bounds);
+									// Mise à jour de l'affichage des résultats de recherche dans la page
+									updateSearchResults(city, searchResults);
 								})
 								.catch(error => console.error('Erreur lors de la récupération des lieux:', error));
 						} else {
@@ -164,11 +182,50 @@
 					})
 					.catch(error => console.error('Erreur:', error));
 			});
+
+			// Fonction pour mettre à jour les résultats de recherche
+			function updateSearchResults(city, results) {
+				const resultsContainer = document.querySelector('.search-results-container');
+				if (resultsContainer) {
+					resultsContainer.style.display = 'block'; // Afficher la section si des résultats sont disponibles
+					if (results.length > 0) {
+						let resultsHTML = `<h1 class="post-card-title">5 suggestions pour votre recherche "${city}" :</h1>`;
+						resultsHTML += '<div class="post-feed">';
+						results.forEach(post => {
+							resultsHTML += `
+								<article class="post-card post">
+									<a class="post-card-image-link" href="/${post.slug}">
+										<img class="post-card-image" src="${post.feature_image}" alt="${post.title}">
+									</a>
+									<div class="post-card-content">
+										<a class="post-card-content-link" href="/${post.slug}">
+											<header class="post-card-header">
+												<div class="post-card-tags">${post.primary_tag ? post.primary_tag.name : ''}</div>
+												<h2 class="post-card-title">${post.title}</h2>
+											</header>
+											<div class="post-card-excerpt">${post.excerpt}</div>
+										</a>
+										<footer class="post-card-meta">
+											<time class="post-card-meta-date" datetime="${post.published_at}">${new Date(post.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</time>
+										</footer>
+									</div>
+								</article>`;
+						});
+						resultsHTML += '</div>';
+						resultsContainer.innerHTML = resultsHTML;
+					} else {
+						resultsContainer.innerHTML = `<p>Aucun résultat trouvé pour ${city}.</p>`;
+					}
+				} else {
+					console.error("L'élément .search-results-container n'a pas été trouvé dans le DOM.");
+				}
+			}
+
 		});
+		
 	</script>
 
-	{{!-- Style CSS pour la carte --}}
-
+	{{!-- Style CSS pour la carte et lieux recherchés --}}
 
 	<style>
 		#map {
@@ -180,13 +237,13 @@
 			text-align: center;
 			margin: 20px auto;
 			max-width: 100%;
-			/* Pour la largeur du formulaire */
 		}
 
 		#location-search-form {
 			display: flex;
 			justify-content: center;
 			gap: 10px;
+			margin-top: 20px;
 		}
 
 		#location-input {
@@ -204,5 +261,162 @@
 			border: none;
 			border-radius: 5px;
 			cursor: pointer;
+		}
+
+		.search-results-container .post-feed {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr); /* 6 colonnes pour aligner avec les grands écrans */
+			grid-gap: 4vmin;
+			margin-bottom: 4vmin;
+		}
+
+		.search-results-container .post-card {
+			display: flex;
+			flex-direction: column;
+			background-size: cover;
+			word-break: break-word;
+		}
+
+		.search-results-container .post-card-image {
+			width: 100%;
+			height: auto;
+			background: var(--color-lightgrey) no-repeat center center;
+			object-fit: cover;
+		}
+
+		.search-results-container .post-card-title {
+			font-size: 3rem;
+			margin: 5px 0;
+		}
+
+		.search-results-container .post-card-excerpt {
+			margin-top: 12px;
+			max-width: 720px;
+			font-size: 1.6rem;
+			line-height: 1.5;
+			word-break: break-word;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			display: -webkit-box;
+			-webkit-line-clamp: 3;
+			-webkit-box-orient: vertical;
+		}
+
+		/* Première ligne : 2 posts moyens */
+		.search-results-container .post-feed .post-card:nth-child(1),
+		.search-results-container .post-feed .post-card:nth-child(2) {
+			grid-column: span 3; /* Chaque post occupe 3 colonnes */
+			display: flex;
+			flex-direction: column;
+			background-size: cover;
+			word-break: break-word;
+		}
+
+		/* Deuxième ligne : 3 posts petits */
+		.search-results-container .post-feed .post-card:nth-child(3),
+		.search-results-container .post-feed .post-card:nth-child(4),
+		.search-results-container .post-feed .post-card:nth-child(5) {
+			grid-column: span 2; /* Chaque post occupe 2 colonnes */
+			display: flex;
+			flex-direction: column;
+			background-size: cover;
+			word-break: break-word;
+		}
+
+		@media (max-width: 1000px) {
+			.search-results-container .post-feed {
+				grid-template-columns: repeat(4, 1fr);
+			}
+
+			.search-results-container .post-card {
+				grid-column: span 2;
+			}
+
+			.search-results-container .post-card:nth-child(1),
+			.search-results-container .post-card:nth-child(2) {
+				grid-column: span 4;
+			}
+		}
+
+		@media (max-width: 768px) {
+			.search-results-container .post-feed {
+				grid-template-columns: repeat(2, 1fr);
+			}
+
+			.search-results-container .post-card {
+				grid-column: span 2;
+			}
+
+			.search-results-container .post-card:nth-child(1),
+			.search-results-container .post-card:nth-child(2) {
+				grid-column: span 2;
+			}
+		}
+
+		/* Couleur spécifique pour h1 */
+		h1.post-card-title {
+			color: #58508d;
+		}
+
+		/* Styles par défaut pour h1 et h2 */
+		h1.post-card-title {
+			font-size: 3.2rem; /* h1 légèrement plus grand */
+			line-height: 1;
+			margin-top: 0;
+		}
+
+		h2.post-card-title {
+			font-size: 3rem; /* h2 légèrement plus petit */
+			line-height: 1;
+			margin-top: 0;
+		}
+
+		/* Styles pour les grands écrans */
+		@media (min-width: 1001px) {
+			h1.post-card-title {
+				font-size: 4.4rem; /* h1 plus grand sur les grands écrans */
+				line-height: 1.05;
+			}
+
+			h2.post-card-title {
+				font-size: 4.2rem; /* h2 un peu plus petit */
+				line-height: 1.05;
+			}
+		}
+
+		/* Uniformisation des titres des posts sur grand écran */
+		@media (min-width: 1001px) {
+			.post-card-large .post-card-title,
+			.post-card.dynamic .post-card-title,
+			.search-results-container .post-card-title {
+				font-size: 4.2rem; /* Uniformise tous les h2 sur grand écran */
+				line-height: 1.05;
+			}
+		}
+
+		/* Styles pour les écrans moyens */
+		@media (max-width: 1000px) {
+			h1.post-card-title {
+				font-size: 3.2rem;
+				line-height: 1.05;
+			}
+
+			h2.post-card-title {
+				font-size: 3rem;
+				line-height: 1.05;
+			}
+		}
+
+		/* Styles pour les petits écrans */
+		@media (max-width: 768px) {
+			h1.post-card-title {
+				font-size: 3rem;
+				line-height: 1.1;
+			}
+
+			h2.post-card-title {
+				font-size: 2.8rem;
+				line-height: 1.1;
+			}
 		}
 	</style>
