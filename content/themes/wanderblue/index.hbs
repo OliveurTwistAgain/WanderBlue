@@ -1,0 +1,164 @@
+{{!< default}} 
+{{!-- Contenu injecté dans {{{body}}} --}}
+
+{{!-- ============================================== --}}
+{{!-- MAIN PAGE D'ACCUEIL --}}
+{{!-- ============================================== --}}
+
+<main id="site-main" class="site-main outer">
+
+    {{!-- ============================================== --}}
+    {{!-- FORMULAIRE DE RECHERCHE + CARTE --}}
+    {{!-- ============================================== --}}
+    <section id="lieux" class="inner posts">
+        <h1 class="post-card-title">Recherche de lieux à visiter</h1>
+        <form id="location-search-form">
+            <input type="text" id="location-input" placeholder="Entrez une ville" required>
+            <button type="submit">Rechercher</button>
+        </form>
+        <div id="map"></div>
+    </section>
+
+    {{!-- ============================================== --}}
+    {{!-- RÉSULTATS DES 5 LIEUX LES PLUS PROCHES --}}
+    {{!-- ============================================== --}}
+    <section id="nearby-results" class="inner posts" style="display:none;">
+        <h2 class="post-card-title" id="nearby-title">Résultats proches</h2>
+        <div class="post-feed" id="nearby-posts"></div>
+    </section>
+
+    {{!-- ============================================== --}}
+    {{!-- DERNIERS COUPS DE CŒUR --}}
+    {{!-- ============================================== --}}
+    <section id="latest-posts" class="inner posts">
+        <h2 class="post-card-title">Nos derniers coups de cœur</h2>
+        <div class="post-feed">
+            {{#get "posts" limit="24" order="published_at desc" as |posts|}}
+                {{#foreach posts}}
+                    <article class="post-card">
+                        <a href="/{{slug}}">
+                            {{#if feature_image}}
+                                <img src="{{feature_image}}" alt="{{title}}" class="post-card-image">
+                            {{/if}}
+                            <div class="post-card-content">
+                                <h3 class="post-card-title">{{title}}</h3>
+                                <p class="post-card-excerpt">{{excerpt}}</p>
+                            </div>
+                        </a>
+                    </article>
+                {{/foreach}}
+            {{/get}}
+        </div>
+    </section>
+
+</main>
+
+{{!-- ============================================== --}}
+{{!-- SCRIPT : CARTE + RECHERCHE GHOST --}}
+{{!-- ============================================== --}}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById('location-search-form');
+    const input = document.getElementById('location-input');
+    const mapDiv = document.getElementById('map');
+    const nearbySection = document.getElementById('nearby-results');
+    const nearbyContainer = document.getElementById('nearby-posts');
+    const nearbyTitle = document.getElementById('nearby-title');
+
+    const map = L.map(mapDiv).setView([48.8566, 2.3522], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18
+    }).addTo(map);
+
+    let markers = [];
+
+    function calculateDistance(lat1, lon1, lat2, lon2){
+        const R = 6371;
+        const dLat = (lat2-lat1)*Math.PI/180;
+        const dLon = (lon2-lon1)*Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+        return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function getLatLon(post){
+        const latMatch = post.codeinjection_head?.match(/<meta\s+name="latitude"\s+content="([\d.-]+)"/);
+        const lonMatch = post.codeinjection_foot?.match(/<meta\s+name="longitude"\s+content="([\d.-]+)"/);
+        return (latMatch && lonMatch) ? {lat: parseFloat(latMatch[1]), lon: parseFloat(lonMatch[1])} : null;
+    }
+
+    function displayNearby(city, posts){
+        nearbyContainer.innerHTML = '';
+        nearbyTitle.textContent = `5 suggestions pour "${city}"`;
+        if(posts.length === 0){
+            nearbyContainer.innerHTML = `<p>Aucun lieu trouvé pour "${city}"</p>`;
+            nearbySection.style.display = 'block';
+            return;
+        }
+
+        const bounds = L.latLngBounds([]);
+        posts.forEach(post => {
+            const marker = L.marker([post.lat, post.lon]).addTo(map)
+                .bindPopup(`
+                    <a href="/${post.slug}">
+                        ${post.feature_image ? `<img src="${post.feature_image}" alt="${post.title}" style="width:100%;border-radius:6px;margin-bottom:5px;">` : ''}
+                        <h3 style="margin:5px 0;">${post.title}</h3>
+                    </a>
+                    <p style="margin:0;">${post.excerpt || ''}</p>
+                `);
+            markers.push(marker);
+            bounds.extend([post.lat, post.lon]);
+
+            const postHTML = `
+                <article class="post-card">
+                    <a href="/${post.slug}">
+                        ${post.feature_image ? `<img src="${post.feature_image}" alt="${post.title}" class="post-card-image">` : ''}
+                        <div class="post-card-content">
+                            <h3 class="post-card-title">${post.title}</h3>
+                            <p class="post-card-excerpt">${post.excerpt || ''}</p>
+                        </div>
+                    </a>
+                </article>`;
+            nearbyContainer.insertAdjacentHTML('beforeend', postHTML);
+        });
+        map.fitBounds(bounds);
+        nearbySection.style.display = 'block';
+    }
+
+    form.addEventListener('submit', async e=>{
+        e.preventDefault();
+        const city = input.value.trim();
+        if(!city) return;
+
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+        const geoData = await geoRes.json();
+        if(geoData.length === 0) return alert("Ville introuvable");
+
+        const cityLat = parseFloat(geoData[0].lat);
+        const cityLon = parseFloat(geoData[0].lon);
+
+        markers.forEach(m => m.remove());
+        markers = [];
+
+        const apiUrl = window.GHOST_API_URL || "https://wanderblue-template.up.railway.app/ghost/api/content/posts/";
+        const apiKey = window.GHOST_API_KEY || "your_content_api_key";
+
+        const res = await fetch(`${apiUrl}?key=${apiKey}&limit=all&fields=title,slug,codeinjection_head,codeinjection_foot,feature_image,excerpt`);
+        const data = await res.json();
+
+        const postsWithCoords = data.posts.map(p=>{
+            const coords = getLatLon(p);
+            if(coords){
+                return {...p, lat: coords.lat, lon: coords.lon, distance: calculateDistance(cityLat, cityLon, coords.lat, coords.lon)};
+            }
+            return null;
+        }).filter(p=>p!==null);
+
+        postsWithCoords.sort((a,b)=>a.distance-b.distance);
+        const closest5 = postsWithCoords.slice(0,5);
+
+        displayNearby(city, closest5);
+    });
+
+});
+</script>

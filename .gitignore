@@ -1,0 +1,45 @@
+# Fichiers d'environnement
+.env
+.env.prod
+
+# Configurations sensibles
+config.production.json
+
+# Données Ghost (SQLite)
+content/data/ghost.db
+
+# Fichiers d'import/export de données Ghost
+content/data/exports/
+content/data/imports/
+
+# Images wanderblue
+content/images/
+content/logs/
+content/files/
+content/media/
+
+# Ignorer tous les thèmes sauf wanderblue
+content/themes/casper
+content/themes/source
+content/themes/Casper-oo/
+*.zip
+!content/themes/wanderblue/
+
+# Docker overrides
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Systèmes d'exploitation et éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Node modules
+node_modules/
+yarn.lock
+package-lock.json
+
+
+
+
+

@@ -1,0 +1,4 @@
+* linguist-language=Dockerfile
+*.dockerfile linguist-language=Dockerfile
+*.yml linguist-language=YAML
+*.json linguist-language=JSON

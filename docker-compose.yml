@@ -1,0 +1,22 @@
+services:
+  ghost:
+    image: ghost:latest
+    container_name: wanderblue_ghost
+    restart: always
+    ports:
+      - "${PORT:-2368}:2368"       # Expose 2368 localement ou via .env
+    volumes:
+      - ./content:/var/lib/ghost/content           # Persistance posts, thèmes, médias
+      - ./config.production.json:/var/lib/ghost/config.production.json:ro  # Config Ghost (lecture seule)
+    env_file:
+      - ${ENV_FILE:-.env}   # Choisir .env ou .env.prod avant lancement
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}          # development ou production
+      url: ${GHOST_URL}                           # URL publique ou localhost
+      mail__transport: ${MAIL_TRANSPORT}          # SMTP / Mailgun
+      mail__options__service: ${MAIL_SERVICE:-}
+      mail__options__auth__user: ${MAIL_USER:-}
+      mail__options__auth__pass: ${MAIL_PASSWORD:-}
+      mail__from: ${MAIL_FROM:-}
+      database__client: ${DATABASE_CLIENT}        # sqlite3 ou mysql/postgres en prod
+      database__connection__filename: ${DATABASE_FILENAME:-content/data/ghost.db} # pour sqlite
