@@ -2,14 +2,14 @@
 
 Bienvenue sur WanderBlue ! Flânez et trouvez votre coin de ciel bleu...
 
-Un projet Ghost CMS personnalisé, propulsé par Docker. L’objectif du site web ? Proposer aux internautes des idées de visites à travers le monde via un formulaire de recherche (ville à saisir). Chaque post représente un lieu avec ses coordonnées GPS (latitude et longitude).
+Un projet Ghost CMS personnalisé, propulsé par Docker. L’objectif du site web ? Proposer aux internautes des idées de visites à travers le monde via un formulaire de recherche (ville à saisir). Chaque post représente un lieu avec ses coordonnées GPS (latitude et longitude). Ou comment créer, apprendre, réviser sa géographie et partager quelques fragments du monde en même temps !
 
 ![alt text](<2025-11-03 15_54_59-WanderBlue - Opera.png>)
 
 ## Configuration
 
 Ce projet permet de lancer une instance **Ghost CMS** en local avec **Docker** et une base **SQLite**.  
-C’est une configuration pour tester, développer et comprendre Ghost avant de déployer en production. Un objectif simple : créer, apprendre, réviser sa géographie et partager quelques fragments du monde !
+C’est une configuration pour tester, développer et comprendre Ghost avant de déployer en production.
 
 ## Prérequis
 
