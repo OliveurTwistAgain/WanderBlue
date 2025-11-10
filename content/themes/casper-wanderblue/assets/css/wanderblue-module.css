@@ -1,0 +1,579 @@
+/* ============== WanderBlue Module ============== */
+
+/* ============== Sommaire ==============
+   1. Variables
+   2. Layout global
+   3. Header
+   4. Module : Carte Leaflet + Formulaire
+   5. Module : Suggestions (6 lieux)
+   6. Posts
+   7. Pied de page (Footer)
+   8. Responsive / Adaptations mobiles
+   ===================================== */
+
+/* --- 1. Variables --- */
+:root {
+    --main-color: #58508d;
+    --accent-color: #a7579b;
+    --bg-color: #ffffff;
+    --text-color: #333333;
+
+    /* Sur fond sombre */
+    --text-on-dark: #dddddd;
+    --link-on-dark: #f5f5f5;
+
+    /* États et interactions */
+    --hover-color: #7266b5;
+    --border-color: #e0e0e0;
+
+    /* Footer */
+    --footer-bg: #111;
+    --footer-link-hover: var(--accent-color);
+
+    /* Typographie */
+    --font-main: 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* --- 2. Layout global --- */
+a,
+button,
+.post-card {
+    transition: all 0.2s ease-in-out;
+}
+
+.outer {
+    padding: 0 max(4vmin, 20px);
+}
+
+.inner {
+    margin: 0 auto;
+    max-width: 1200px;
+    width: 100%;
+}
+
+/* --- 3. Header --- */
+.site-header-content {
+    position: relative;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    background-color: var(--main-color);
+    font-family: var(--font-main);
+    min-height: 300px;
+    padding: 2rem 1rem;
+    overflow: hidden;
+}
+
+/* Si le header a une cover */
+.has-cover .site-header-content {
+    min-height: 300px;
+    /* force la hauteur même avec cover */
+}
+
+/* Responsive : réduire la hauteur sur tablettes / mobiles */
+@media (max-width: 768px) {
+
+    .site-header-content,
+    .has-cover .site-header-content {
+        min-height: 250px;
+        padding: 1.5rem 1rem;
+    }
+}
+
+
+/* --- 4. Module : Carte Leaflet + Formulaire --- */
+
+/* Conteneur du formulaire de recherche */
+#location-search-form {
+    margin: 2rem auto 2.5rem auto;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+/* Groupe input + bouton */
+#location-search-form .search-input-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+/* Champ de recherche */
+#location-search-form input[type="search"] {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1.5rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: var(--font-main);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: 48px;
+    line-height: 1.2;
+}
+
+/* Effet focus sur le champ */
+#location-search-form input[type="search"]:focus {
+    border-color: var(--main-color);
+    box-shadow: 0 0 5px rgba(167, 87, 155, 0.3);
+}
+
+/* Bouton de recherche */
+#location-search-form button {
+    padding: 0 1.5rem;
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 1.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    height: 48px;
+    line-height: 1.2;
+}
+
+#location-search-form button:hover {
+    background-color: var(--hover-color);
+}
+
+/* Carte Leaflet */
+#map {
+    width: 100%;
+    max-width: 1100px;
+    height: 450px;
+    margin: 2rem auto;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    /* #map {
+        height: 50vh;
+    } */
+
+    /* Formulaire passe en colonne */
+    #location-search-form .search-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    /* Corrige le dépassement du bouton et taille du texte */
+    #location-search-form input[type="search"],
+    #location-search-form button {
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+        box-sizing: border-box;
+    }
+}
+
+/* Formulaire largeur max sur très grands écrans */
+@media (min-width: 1200px) {
+    #location-search-form .search-input-group {
+        max-width: 550px;
+    }
+}
+
+/* Leaflet popups */
+.leaflet-popup-content img {
+    width: 100%;
+    border-radius: 6px;
+    margin-bottom: 5px;
+}
+
+.leaflet-popup-content h3 {
+    margin: 0.3rem 0;
+    font-size: 1.2rem;
+    color: var(--main-color);
+    font-family: var(--font-main);
+}
+
+.leaflet-popup-content p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+/* --- 5. Module : Suggestions (6 lieux) --- */
+#nearby-results {
+    margin: 3rem 0;
+}
+
+/* Grille principale */
+.post-suggestions {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2rem;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+/* === HERO (1er lieu) === */
+.post-suggestions .post-card:nth-child(1) {
+    grid-column: span 6;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+/* Image du hero à gauche */
+.post-suggestions .post-card:nth-child(1) .post-card-image-link {
+    width: 60%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 16 / 9;
+}
+
+/* Image elle-même */
+.post-suggestions .post-card:nth-child(1) .post-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Contenu texte à droite */
+.post-suggestions .post-card:nth-child(1) .post-card-content {
+    width: 40%;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* === MEDIUM (2e et 3e lieux) === */
+.post-suggestions .post-card:nth-child(2),
+.post-suggestions .post-card:nth-child(3) {
+    grid-column: span 3;
+}
+
+.post-suggestions .post-card:nth-child(2) .post-card-image-link,
+.post-suggestions .post-card:nth-child(3) .post-card-image-link {
+    aspect-ratio: 4 / 3;
+    max-height: 280px;
+    overflow: hidden;
+}
+
+.post-suggestions .post-card:nth-child(2) .post-card-image,
+.post-suggestions .post-card:nth-child(3) .post-card-image {
+    object-fit: cover;
+    filter: brightness(0.95);
+}
+
+/* === SMALL (à partir du 4e lieu) === */
+.post-suggestions .post-card:nth-child(n + 4) {
+    grid-column: span 2;
+}
+
+.post-suggestions .post-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-suggestions .post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+
+/* --- 6. Posts --- */
+/* Grille principale des posts (Homepage & Read More) */
+
+.post-feed-no-infinite.wb-grid,
+.post-suggestions {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Style des cartes de post */
+.post-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-card-content {
+    padding: 1.25rem;
+}
+
+.post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* --- Layout hiérarchisé (Hero / Medium / Small) --- */
+
+/* === HERO : 1er post === */
+.post-feed-no-infinite.wb-grid .post-card:nth-child(1),
+.post-suggestions .post-card:nth-child(1) {
+    grid-column: span 6;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+/* wrapper image à gauche */
+.post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-image-link,
+.post-suggestions .post-card:nth-child(1) .post-card-image-link {
+    width: 60%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+/* image elle-même */
+.post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-image,
+.post-suggestions .post-card:nth-child(1) .post-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* contenu texte à droite */
+.post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-content,
+.post-suggestions .post-card:nth-child(1) .post-card-content {
+    width: 40%;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* === MEDIUM : 2e et 3e === */
+.post-feed-no-infinite.wb-grid .post-card:nth-child(2),
+.post-feed-no-infinite.wb-grid .post-card:nth-child(3),
+.post-suggestions .post-card:nth-child(2),
+.post-suggestions .post-card:nth-child(3) {
+    grid-column: span 3;
+}
+
+.post-feed-no-infinite.wb-grid .post-card:nth-child(2) .post-card-image-link,
+.post-feed-no-infinite.wb-grid .post-card:nth-child(3) .post-card-image-link,
+.post-suggestions .post-card:nth-child(2) .post-card-image-link,
+.post-suggestions .post-card:nth-child(3) .post-card-image-link {
+    aspect-ratio: 4 / 3;
+    max-height: 280px;
+    overflow: hidden;
+}
+
+.post-feed-no-infinite.wb-grid .post-card:nth-child(2) .post-card-image,
+.post-feed-no-infinite.wb-grid .post-card:nth-child(3) .post-card-image,
+.post-suggestions .post-card:nth-child(2) .post-card-image,
+.post-suggestions .post-card:nth-child(3) .post-card-image {
+    object-fit: cover;
+    filter: brightness(0.95);
+}
+
+/* === SMALL : tous les suivants === */
+.post-feed-no-infinite.wb-grid .post-card:nth-child(n + 4),
+.post-suggestions .post-card:nth-child(n + 4) {
+    grid-column: span 2;
+}
+
+/* Masquage éléments Casper inutiles */
+.post-card-excerpt,
+.post-card-meta,
+.post-card-meta-date,
+.article-byline,
+.article-byline-content {
+    display: none !important;
+}
+
+/* Titres h2 homogènes (index, modules, etc.) */
+.site-main>.inner>h2,
+#nearby-results h2,
+h2.read-more-title,
+.post-template .read-more-title,
+.post-card-favorites-title {
+    text-align: center;
+    color: var(--accent-color) !important;
+    font-weight: 800;
+    line-height: 1.2;
+    font-size: 3rem;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-family: var(--font-main);
+}
+
+
+/* --- 7. Pied de page (Footer) --- */
+.site-footer {
+    padding: 4vmin max(4vmin, 20px);
+    background: var(--footer-bg);
+    color: #fff;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.site-footer a:hover {
+    color: var(--footer-link-hover);
+}
+
+
+/* --- 8. Responsive / Adaptations mobiles --- */
+
+/* Desktop large → 6 colonnes */
+@media (max-width: 1200px) {
+
+    .post-feed-no-infinite.wb-grid,
+    .post-suggestions {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1),
+    .post-suggestions .post-card:nth-child(1) {
+        grid-column: span 6;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(2),
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(3),
+    .post-suggestions .post-card:nth-child(2),
+    .post-suggestions .post-card:nth-child(3) {
+        grid-column: span 3;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(n + 4),
+    .post-suggestions .post-card:nth-child(n + 4) {
+        grid-column: span 2;
+    }
+}
+
+/* Tablette / medium screens → 3 colonnes */
+@media (max-width: 1024px) {
+
+    .post-feed-no-infinite.wb-grid,
+    .post-suggestions {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1),
+    .post-suggestions .post-card:nth-child(1) {
+        grid-column: span 3;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(2),
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(3),
+    .post-suggestions .post-card:nth-child(2),
+    .post-suggestions .post-card:nth-child(3) {
+        grid-column: span 3;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(n + 4),
+    .post-suggestions .post-card:nth-child(n + 4) {
+        grid-column: span 1;
+    }
+
+    /* Hero image : pleine largeur */
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1),
+    .post-suggestions .post-card:nth-child(1) {
+        flex-direction: column;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(1) .post-card-image-link {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-content,
+    .post-suggestions .post-card:nth-child(1) .post-card-content {
+        width: 100%;
+        padding: 1.5rem;
+    }
+
+    /* Medium plus compacts */
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(2) .post-card-image-link,
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(3) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(2) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(3) .post-card-image-link {
+        aspect-ratio: 4 / 3;
+        max-height: 220px;
+    }
+}
+
+/* Tablette portrait / grand mobile → 2 colonnes */
+@media (max-width: 768px) {
+
+    .post-feed-no-infinite.wb-grid,
+    .post-suggestions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Hero full width */
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1),
+    .post-suggestions .post-card:nth-child(1) {
+        grid-column: span 2;
+        flex-direction: column;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(1) .post-card-image-link {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(1) .post-card-content,
+    .post-suggestions .post-card:nth-child(1) .post-card-content {
+        width: 100%;
+        padding: 1.5rem;
+    }
+
+    /* Medium plus petits */
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(2),
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(3),
+    .post-suggestions .post-card:nth-child(2),
+    .post-suggestions .post-card:nth-child(3) {
+        grid-column: span 1;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(2) .post-card-image-link,
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(3) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(2) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(3) .post-card-image-link {
+        aspect-ratio: 4 / 3;
+        max-height: 200px;
+    }
+}
+
+/* Mobile petit écran → 1 colonne */
+@media (max-width: 480px) {
+
+    .post-feed-no-infinite.wb-grid,
+    .post-suggestions {
+        grid-template-columns: 1fr;
+    }
+
+    .post-card {
+        grid-column: span 1 !important;
+        min-height: auto;
+    }
+
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(2) .post-card-image-link,
+    .post-feed-no-infinite.wb-grid .post-card:nth-child(3) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(2) .post-card-image-link,
+    .post-suggestions .post-card:nth-child(3) .post-card-image-link {
+        max-height: 180px;
+    }
+}

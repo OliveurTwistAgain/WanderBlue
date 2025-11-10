@@ -21,9 +21,8 @@ content/media/
 # Ignorer tous les thèmes sauf wanderblue
 content/themes/casper
 content/themes/source
-content/themes/Casper-oo/
 *.zip
-!content/themes/wanderblue/
+!content/themes/casper-wanderblue/
 
 # Docker overrides
 docker-compose.override.yml

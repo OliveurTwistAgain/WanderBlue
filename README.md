@@ -4,7 +4,7 @@ Bienvenue sur WanderBlue ! Flânez et trouvez votre coin de ciel bleu...
 
 Un projet Ghost CMS personnalisé, propulsé par Docker. L’objectif du site web ? Proposer aux internautes des idées de visites à travers le monde via un formulaire de recherche (ville à saisir). Chaque post représente un lieu avec ses coordonnées GPS (latitude et longitude). Ou comment créer, apprendre, réviser sa géographie et partager quelques fragments du monde en même temps !
 
-![alt text](<2025-11-03 15_54_59-WanderBlue - Opera.png>)
+![Carte Leaflet WanderBlue](<content/images/WanderBlue-Glasgow.png>)
 
 ## Configuration
 
@@ -28,13 +28,11 @@ cd WanderBlue
 
 ### 2. Variables d’environnement
 
+Les fichiers .env et .env.prod ne contiennent aucune clé API sensible : les variables d’accès à l’API Ghost sont désormais injectées directement dans l’interface d’administration, via Settings → Code Injection.
+
 Créer un fichier **`.env`** à la racine avec ce contenu :
 
 ```bash
-# Ghost - Localhost
-GHOST_URL=http://localhost:2368
-GHOST_PORT=2368
-
 # SQLite (base locale)
 DATABASE_CLIENT=sqlite3
 DATABASE_FILE=content/data/ghost.db
@@ -49,14 +47,36 @@ MAILGUN_API_KEY=api-key
 MAILGUN_DOMAIN=sandbox.mailgun.org
 ```
 
-Et pour un déploiement production, créer un fichier .env.prod (exemple sur Render, Railway, DigitalPress etc) :
+Et pour un déploiement production, créer un fichier .env.prod à adapter selon ton environnement de production (exemple sur Render, Railway, DigitalPress etc) :
 
 ```bash
-GHOST_URL=https://ton-projet.onrender.com
+GHOST_URL=https://ton-projet.com
 PORT=2368
 DATABASE_CLIENT=sqlite3
 DATABASE_FILE=./content/data/ghost.db
 NODE_ENV=production
+```
+
+#### Configuration de la recherche (API Ghost)
+
+Le thème **WanderBlue** utilise l’API publique de Ghost pour charger les lieux et leurs coordonnées GPS. Par sécurité, la clé d’API est injectée depuis l’interface d’administration Ghost.
+
+En local, aller dans **Settings → Code Injection → Site Footer** puis ajouter :
+
+```html
+<script>
+window.GHOST_API_URL = "http://localhost:2368/ghost/api/content/posts/";
+window.GHOST_API_KEY = "votre_clef_api_locale";
+</script>
+```
+
+En production, aller dans **Settings → Code Injection → Site Footer** puis ajouter :
+
+```html
+<script>
+window.GHOST_API_URL = "https://ton-projet.com/ghost/api/content/posts/";
+window.GHOST_API_KEY = "votre_clef_api_production";
+</script>
 ```
 
 ### 3. Exemple de docker-compose.yml
@@ -79,7 +99,7 @@ services:
 
 Les données Ghost (base SQLite, images, thèmes, etc.) sont persistées localement dans le dossier ./content.
 
-## Commandes utiles
+### 4. Commandes utiles
 
 ```bash
 # Démarrer Ghost en local
@@ -103,21 +123,42 @@ docker ps
 # Supprimer les volumes (utile uniquement pour repartir à zéro)
 docker compose down -v
 
-# Générer la structure du projet sur Windows
+# Générer la structure du projet sur Windows avec fichier texte
 tree /f > structure.txt
 
-# sur macOS / Linux
+# sur macOS / Linux avec fichier texte
 tree -a > structure.txt
+
+# sur macOS / Linux avec profondeur 2 sans fichier texte
+tree -a -L 2 
 ```
 
-## Accès
+### 5. Accès
 
 - **Admin** : [http://localhost:2368/ghost](http://localhost:2368/ghost)
 - **Site public** : [http://localhost:2368](http://localhost:2368)
 
-## Étapes suivantes
+### 6. Coordonnées GPS (Latitude & Longitude)
 
-- Ajouter des articles/pages dans Ghost
+Chaque lieu correspond à un post Ghost. Pour chaque post, il faut renseigner les coordonnées GPS afin que le lieu s’affiche correctement sur la carte.
+
+Trouver les coordonnées GPS ici : [https://www.geoplaner.com/](https://www.geoplaner.com/)
+
+Exemple pour Boston, syntaxe à respecter :
+
+1. Dans Code injection > Header
+```bash
+<meta name="latitude" content="42.35543">
+```
+
+2. Dans Code injection > Footer
+```bash
+<meta name="longitude" content="-71.06051">
+```
+
+### 7. Étapes suivantes
+
+- Ajouter articles/pages/tags dans Ghost
 - Explorer l’API Content : `/ghost/api/content/`
 - Tester l’API Admin : `/ghost/api/admin/`
 - Préparer un déploiement en production : Railway, Render, Pikapods, DigitalPress, VPS…
