@@ -4,7 +4,7 @@ Bienvenue sur WanderBlue ! Flânez et trouvez votre coin de ciel bleu...
 
 Un projet Ghost CMS personnalisé, propulsé par Docker. L’objectif du site web ? Proposer aux internautes des idées de visites à travers le monde via un formulaire de recherche (ville à saisir). Chaque post représente un lieu avec ses coordonnées GPS (latitude et longitude). Ou comment créer, apprendre, réviser sa géographie et partager quelques fragments du monde en même temps !
 
-![Carte Leaflet WanderBlue](<content/images/WanderBlue-Glasgow.png>)
+![Map](<content/themes/casper-wanderblue/assets/images/WanderBlue-Glasgow.png>)
 
 ## Configuration
 

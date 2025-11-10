@@ -29,10 +29,10 @@ MIT - Libre d'utilisation, modification et partage.
 
 # Captures d’ecran du thème
 
-![Index Mobile](/content/images/wb-mobile.jpg)
+![Index Mobile](/content/themes/casper-wanderblue/assets/images/wb-mobile.jpg)
 
-![Map Mobile](/content/images/WanderBlue-Glasgow.png)
+![Map Mobile](/content/themes/casper-wanderblue/assets/images/WanderBlue-Boston.png)
 
-![Index Desktop](/content/images/wb-desktop.jpg)
+![Index Desktop](/content/themes/casper-wanderblue/assets/images/wb-desktop.jpg)
 
-![Tag Desktop](/content/images/wb-tag.jpg)
+![Tag Desktop](/content/themes/casper-wanderblue/assets/images/wb-tag.jpg)
