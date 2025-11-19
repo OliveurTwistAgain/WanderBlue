@@ -1,0 +1,23 @@
+<!-- Scroll to Top Button -->
+<button id="scroll-to-top" class="scroll-to-top" title="Retour en haut">
+    ↑
+</button>
+
+<!-- Scroll to Top Script -->
+<script>
+// Afficher le bouton après un certain scroll
+const scrollBtn = document.getElementById("scroll-to-top");
+
+window.onscroll = () => {
+    if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+        scrollBtn.classList.add("show");
+    } else {
+        scrollBtn.classList.remove("show");
+    }
+};
+
+// Scroll vers le haut au clic
+scrollBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+</script>

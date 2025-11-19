@@ -29,7 +29,41 @@
 <section id="nearby-results" class="outer" style="display:none;">
     <div class="inner posts">
         <h2 class="post-card-title" id="nearby-title">Résultats proches</h2>
-        <div class="post-suggestions" id="nearby-posts"></div>
+        <div class="post-suggestions" id="nearby-posts">
+            {{#foreach posts}}
+                <article class="post-card">
+                    {{!-- Affichage de l'image si présente --}}
+                    {{#if feature_image}}
+                        <a href="/{{slug}}" class="post-card-image-link">
+                            <img class="post-card-image"
+                                srcset="{{img_url feature_image size="s"}} 300w,
+                                        {{img_url feature_image size="m"}} 600w,
+                                        {{img_url feature_image size="l"}} 1000w,
+                                        {{img_url feature_image size="xl"}} 2000w"
+                                sizes="(max-width: 1000px) 400px, 800px"
+                                src="{{img_url feature_image size="m"}}"
+                                alt="{{title}}" loading="lazy">
+                        </a>
+                    {{/if}}
+                    
+                    <div class="post-card-content">
+                        <header class="post-card-header">
+                            <div class="post-card-tags">
+                                {{#primary_tag}}
+                                    <span class="post-card-primary-tag">{{name}}</span>
+                                {{/primary_tag}}
+                            </div>
+                            <h3 class="post-card-title">
+                                <a href="/{{slug}}">{{title}}</a>
+                            </h3>
+                        </header>
+                        {{#if excerpt}}
+                            <p class="post-card-excerpt">{{excerpt}}</p>
+                        {{/if}}
+                    </div>
+                </article>
+            {{/foreach}}
+        </div>
     </div>
 </section>
 
@@ -72,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function displayNearby(city, posts) {
         nearbyContainer.innerHTML = '';
-        nearbyTitle.textContent = `6 suggestions pour "${city}"`;
+        nearbyTitle.textContent = `Suggestions pour "${city}"`;
 
         if (posts.length === 0) {
             nearbyContainer.innerHTML = `<p>Aucun lieu trouvé pour "${city}"</p>`;
@@ -82,23 +116,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const bounds = L.latLngBounds([]);
         posts.forEach(post => {
+            // --- Primary tag : on teste post.primary_tag sinon post.tags[0]
+            const primaryTag = post.primary_tag || (post.tags && post.tags[0]);
+            const tagsHTML = primaryTag ? `<span class="post-card-primary-tag">${primaryTag.name}</span>` : '';
+
+            // --- Popup Leaflet
+            const popupHTML = `
+                ${post.feature_image ? `<img src="${post.feature_image}" alt="${post.title}" style="width:80%;border-radius:6px;margin-bottom:5px;">` : ''}
+                <div class="post-card-tags">${tagsHTML}</div>
+                <h3 style="margin:5px 0;"><a href="/${post.slug}">${post.title}</a></h3>
+                <p style="margin:0;">${post.excerpt || ''}</p>
+            `;
             const marker = L.marker([post.lat, post.lon]).addTo(map)
-                .bindPopup(`
-                    <a href="/${post.slug}">
-                        ${post.feature_image ? `<img src="${post.feature_image}" alt="${post.title}" style="width:80%;border-radius:6px;margin-bottom:5px;">` : ''}
-                        <h3 style="margin:5px 0;">${post.title}</h3>
-                    </a>
-                    <p style="margin:0;">${post.excerpt || ''}</p>
-                `);
+                .bindPopup(popupHTML);
             markers.push(marker);
             bounds.extend([post.lat, post.lon]);
 
+            // --- Carte HTML comme "coups de coeur"
             nearbyContainer.insertAdjacentHTML('beforeend', `
-                <article class="post-card">
-                    ${post.feature_image ? `<a href="/${post.slug}" class="post-card-image-link"><img src="${post.feature_image}" alt="${post.title}" class="post-card-image"></a>` : ''}
+                <article class="post-card post ${primaryTag ? 'tag-' + primaryTag.slug : ''}">
+                    <a class="post-card-image-link" href="/${post.slug}">
+                        ${post.feature_image ? `<img src="${post.feature_image}" alt="${post.title}" class="post-card-image">` : ''}
+                    </a>
                     <div class="post-card-content">
-                        <h3 class="post-card-title"><a href="/${post.slug}">${post.title}</a></h3>
-                        <p class="post-card-excerpt">${post.excerpt || ''}</p>
+                        <a class="post-card-content-link" href="/${post.slug}">
+                            <header class="post-card-header">
+                                <div class="post-card-tags">${tagsHTML}</div>
+                                <h2 class="post-card-title">${post.title}</h2>
+                            </header>
+                            <div class="post-card-excerpt">${post.excerpt || ''}</div>
+                        </a>
                     </div>
                 </article>
             `);
@@ -132,8 +179,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const res = await fetch(`${apiUrl}?key=${apiKey}&limit=all&fields=title,slug,codeinjection_head,codeinjection_foot,feature_image,excerpt`);
+            const res = await fetch(`${apiUrl}?key=${apiKey}&limit=all&fields=title,slug,codeinjection_head,codeinjection_foot,feature_image,excerpt&include=tags,primary_tag`);
             const data = await res.json();
+
+            // debug tags
+            console.log(data.posts.map(p => ({title: p.title, primary_tag: p.primary_tag, tags: p.tags})));
 
             if (!data.posts || !Array.isArray(data.posts)) throw new Error("Réponse API invalide");
 

@@ -150,7 +150,7 @@ button,
 /* Carte Leaflet */
 #map {
     width: 100%;
-    max-width: 1100px;
+    max-width: 1200px;
     height: 450px;
     margin: 2rem auto;
     border-radius: 6px;
@@ -159,9 +159,6 @@ button,
 
 /* Responsive */
 @media (max-width: 768px) {
-    /* #map {
-        height: 50vh;
-    } */
 
     /* Formulaire passe en colonne */
     #location-search-form .search-input-group {
@@ -399,18 +396,27 @@ button,
 
 /* Titres h2 homogènes (index, modules, etc.) */
 .site-main>.inner>h2,
-#nearby-results h2,
+h2.post-card-title,
 h2.read-more-title,
-.post-template .read-more-title,
-.post-card-favorites-title {
+h2.post-card-favorites-title,
+.post-template .read-more-title {
     text-align: center;
-    color: var(--accent-color) !important;
     font-weight: 800;
     line-height: 1.2;
     font-size: 3rem;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     font-family: var(--font-main);
+}
+
+/* Titres violets spécifiques */
+#nearby-title,
+/* Suggestions pour "Boston" */
+h2.post-card-favorites-title,
+/* Derniers coups de cœur */
+.post-template .read-more-title {
+    /* A voir aussi dans un post */
+    color: var(--accent-color);
 }
 
 
@@ -576,4 +582,35 @@ h2.read-more-title,
     .post-suggestions .post-card:nth-child(3) .post-card-image-link {
         max-height: 180px;
     }
+}
+
+/* Scroll to top button */
+#scroll-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+#scroll-to-top:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+/* Rendre la flèche visible dès qu'on scrolle un peu */
+#scroll-to-top.show {
+    display: flex;
 }
